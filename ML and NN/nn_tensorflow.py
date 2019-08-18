@@ -1,52 +1,79 @@
+# Dependencies
+import tensorflow as tf
+import pandas as pd
 import numpy as np
 
-from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder
+# Make results reproducible
+seed = 1234
+np.random.seed(seed)
+tf.set_random_seed(seed)
 
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.optimizers import Adam
+# Loading the dataset
+dataset = pd.read_csv('./dataset/iris.csv')
+dataset = pd.get_dummies(dataset, columns=['species']) # One Hot Encoding
+values = list(dataset.columns.values)
 
-iris_data = load_iris() # load the iris dataset
+y = dataset[values[-3:]]
+y = np.array(y, dtype='float32')
+X = dataset[values[0:-3]]
+X = np.array(X, dtype='float32')
 
-print('Example data: ')
-print(iris_data.data[:5])
-print('Example labels: ')
-print(iris_data.target[:5])
+# Shuffle Data
+indices = np.random.choice(len(X), len(X), replace=False)
+X_values = X[indices]
+y_values = y[indices]
 
-x = iris_data.data
-y_ = iris_data.target.reshape(-1, 1) # Convert data to a single column
+# Creating a Train and a Test Dataset
+test_size = 10
+X_test = X_values[-test_size:]
+X_train = X_values[:-test_size]
+y_test = y_values[-test_size:]
+y_train = y_values[:-test_size]
 
-# One Hot encode the class labels
-encoder = OneHotEncoder(sparse=False)
-y = encoder.fit_transform(y_)
-#print(y)
+# Session
+sess = tf.Session()
 
-# Split the data for training and testing
-train_x, test_x, train_y, test_y = train_test_split(x, y, test_size=0.20)
+# Interval / Epochs
+interval = 50
+epoch = 500
 
-# Build the model
+# Initialize placeholders
+X_data = tf.placeholder(shape=[None, 4], dtype=tf.float32)
+y_target = tf.placeholder(shape=[None, 3], dtype=tf.float32)
 
-model = Sequential()
+# Input neurons : 4
+# Hidden neurons : 8
+# Output neurons : 3
+hidden_layer_nodes = 8
 
-model.add(Dense(10, input_shape=(4,), activation='relu', name='fc1'))
-model.add(Dense(10, activation='relu', name='fc2'))
-model.add(Dense(3, activation='softmax', name='output'))
+# Create variables for Neural Network layers
+w1 = tf.Variable(tf.random_normal(shape=[4,hidden_layer_nodes])) # Inputs -> Hidden Layer
+b1 = tf.Variable(tf.random_normal(shape=[hidden_layer_nodes]))   # First Bias
+w2 = tf.Variable(tf.random_normal(shape=[hidden_layer_nodes,3])) # Hidden layer -> Outputs
+b2 = tf.Variable(tf.random_normal(shape=[3]))   # Second Bias
 
-# Adam optimizer with learning rate of 0.001
-optimizer = Adam(lr=0.001)
-model.compile(optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
+# Operations
+hidden_output = tf.nn.relu(tf.add(tf.matmul(X_data, w1), b1))
+final_output = tf.nn.softmax(tf.add(tf.matmul(hidden_output, w2), b2))
 
-print('Neural Network Model Summary: ')
-print(model.summary())
+# Cost Function
+loss = tf.reduce_mean(-tf.reduce_sum(y_target * tf.log(final_output), axis=0))
 
-# Train the model
-model.fit(train_x, train_y, verbose=2, batch_size=5, epochs=200)
+# Optimizer
+optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001).minimize(loss)
 
-# Test on unseen data
+# Initialize variables
+init = tf.global_variables_initializer()
+sess.run(init)
 
-results = model.evaluate(test_x, test_y)
+# Training
+print('Training the model...')
+for i in range(1, (epoch + 1)):
+    sess.run(optimizer, feed_dict={X_data: X_train, y_target: y_train})
+    if i % interval == 0:
+        print('Epoch', i, '|', 'Loss:', sess.run(loss, feed_dict={X_data: X_train, y_target: y_train}))
 
-print('Final test set loss: {:4f}'.format(results[0]))
-print('Final test set accuracy: {:4f}'.format(results[1]))
+# Prediction
+print()
+for i in range(len(X_test)):
+    print('Actual:', y_test[i], 'Predicted:', np.rint(sess.run(final_output, feed_dict={X_data: [X_test[i]]})))

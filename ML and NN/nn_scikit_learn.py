@@ -7,9 +7,8 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
  
 ## import the iris dataset for classification
-iris=sklearn.datasets.load_iris()
+iris = sklearn.datasets.load_iris()
  
-## print some data, to see the imported dataset
 print("Printing some sample data from the iris dataset")
 for training_sample in list(zip(iris.data,iris.target))[:5]:
     print(training_sample)
@@ -20,7 +19,6 @@ iris_class=iris.target  # class[X] is output corresponding to features[X]
  
 ## Split the dataset into training (70%) and testing (30%)
 ## Note that the shuffle parameter has been used in splitting.
- 
 print("Splitting the data into testing and training samples")
 ratio_train, ratio_test = 0.7 , 0.3
 features_train, features_test,iris_class_train, iris_class_test = train_test_split(features,iris_class, train_size = ratio_train,test_size=ratio_test, shuffle=True)
@@ -33,7 +31,6 @@ features_train_scale = scaler.transform(features_train)
 features_test_scale = scaler.transform(features_test)
  
 ## The MLPClassifier and MLPRegressor are sklearn implementations of NNs
- 
 iterations=1000   # define the iterations for training over the dataset
 hidden_layers=[10,10,10]  # define the layers/depth of the NN
 print("Creating a neural network with "+str(len(hidden_layers))+" layers and "+str(iterations)+" iterations")
@@ -46,7 +43,6 @@ mlp = MLPClassifier(hidden_layer_sizes=(hidden_layers), max_iter=iterations)
 mlp.fit(features_train_scale, iris_class_train)  # fit features over NN
  
 ## Run the test data over the network to see the predicted outcomes.
- 
 predicted = mlp.predict(features_test_scale)  
  
 # predict over test data
