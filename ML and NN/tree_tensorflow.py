@@ -13,16 +13,19 @@ tf.set_random_seed(123)
 # Load dataset.
 datas = pd.read_csv('./dataset/iris.csv')
 labels = datas.pop('species')
-labels = labels.replace('Iris-setosa', '0')
-labels = labels.replace('Iris-versicolor', '1')
-labels = labels.replace('Iris-virginica', '2')
+
+column_names = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
+class_names = ['Iris-setosa', 'Iris-versicolor', 'Iris-virginica']
+feature_names = column_names[:-1]
+label_name = column_names[-1]
+
+labels = labels.map({"Iris-setosa":0, "Iris-virginica":2, "Iris-versicolor":1})
 # Convert string list to float list
 labels = list(map(float, labels))
 
 # Split the data for training and testing
 train_x, test_x, train_y, test_y = train_test_split(datas, labels, test_size=0.20)
 
-# Use entire batch since this is such a small dataset.
 NUM_EXAMPLES = len(train_y)
 
 def make_input_fn(X, y, n_epochs=None, shuffle=True):
@@ -30,9 +33,7 @@ def make_input_fn(X, y, n_epochs=None, shuffle=True):
     dataset = tf.data.Dataset.from_tensor_slices((dict(X), y))
     if shuffle:
       dataset = dataset.shuffle(NUM_EXAMPLES)
-    # For training, cycle thru dataset as many times as need (n_epochs=None).    
     dataset = dataset.repeat(n_epochs)  
-    # In memory training doesn't use batching.
     dataset = dataset.batch(NUM_EXAMPLES)
     return dataset
   return input_fn
@@ -41,11 +42,6 @@ def make_input_fn(X, y, n_epochs=None, shuffle=True):
 train_input_fn = make_input_fn(train_x, train_y)
 eval_input_fn = make_input_fn(test_x, test_y, shuffle=False, n_epochs=1)
 
-column_names = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
-feature_names = column_names[:-1]
-label_name = column_names[-1]
-class_names = ['Iris-setosa', 'Iris-versicolor', 'Iris-virginica']
-
 fc = tf.feature_column
 feature_columns = []
   
@@ -53,10 +49,15 @@ for feature_name in feature_names:
   feature_columns.append(fc.numeric_column(feature_name, dtype=tf.float32))
 
 n_batches = 1
-est = tf.estimator.BoostedTreesRegressor(feature_columns, n_batches_per_layer=n_batches)
+num_classes = len(class_names)
+# Boosted Tree hien tai chi ho tro n_classes = 2 (0 va 1) nen ta se khai bao nhu vay, va do multi class nen khong tao cay duoc
+est = tf.estimator.BoostedTreesClassifier(feature_columns, n_batches_per_layer=n_batches) 
+# Do tensorflow chua ho tro multi-class, neu duoc ho tro thi ta se khai bao nhu nay`, khi do chuong trinh se chay dc
+"""
+est = tf.estimator.BoostedTreesClassifier(feature_columns, n_batches_per_layer=n_batches, n_classes = num_classes)
 est.train(train_input_fn, max_steps=100)
 
 # Test
 results = est.evaluate(eval_input_fn)
 print('Predicted:', results['prediction/mean'])
-
+"""
