@@ -1,0 +1,1 @@
+/usr/bin/c++     CMakeFiles/nqueen.dir/src/main.cpp.o CMakeFiles/nqueen.dir/src/NQueen.cpp.o CMakeFiles/nqueen.dir/src/UCS.cpp.o CMakeFiles/nqueen.dir/src/Genetic.cpp.o CMakeFiles/nqueen.dir/src/DisplayTable.cpp.o CMakeFiles/nqueen.dir/src/HillClimbing.cpp.o  -o nqueen 

@@ -1,0 +1,3 @@
+/media/lovt/Projects/C++/nqueen/build/CMakeFiles/rebuild_cache.dir
+/media/lovt/Projects/C++/nqueen/build/CMakeFiles/nqueen.dir
+/media/lovt/Projects/C++/nqueen/build/CMakeFiles/edit_cache.dir
